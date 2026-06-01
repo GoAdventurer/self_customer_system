@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能客服系统 · NexusAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — "Nordic Precision"
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-primary: #0B1120;
+  --bg-secondary: #131D2E;
+  --bg-tertiary: #1B2B3F;
+  --bg-elevated: #243447;
+  --bg-glass: rgba(19, 29, 46, 0.85);
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+
+  --accent: #6366F1;
+  --accent-glow: rgba(99, 102, 241, 0.3);
+  --accent-subtle: rgba(99, 102, 241, 0.08);
+
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
+
+  --border: rgba(148, 163, 184, 0.1);
+  --border-accent: rgba(99, 102, 241, 0.3);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --font-ui: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-chat: 'DM Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══ NAVIGATION ═══ */
+.nav-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), #8B5CF6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+}
+
+.nav-title {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.nav-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-left: 12px;
+  padding: 2px 8px;
+  background: var(--accent-subtle);
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.nav-tab {
+  padding: 8px 20px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.nav-tab.active {
+  color: white;
+  background: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ═══ MAIN CONTENT ═══ */
+.main-content {
+  margin-top: 60px;
+  min-height: calc(100vh - 60px);
+}
+
+.view { display: none; height: calc(100vh - 60px); }
+.view.active { display: flex; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW 1: USER CHAT
+   ═══════════════════════════════════════════════════════════════ */
+.chat-view {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #F8FAFD 0%, #EEF2F7 100%);
+  padding: 20px;
+}
+
+.chat-container {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  max-height: 780px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.chat-header {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}
+
+.chat-header-info h3 {
+  font-family: var(--font-chat);
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.chat-header-info span {
+  font-size: 12px;
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-header-info span::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+  animation: msgIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.bot { align-self: flex-start; }
+.msg.user { align-self: flex-end; }
+
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-family: var(--font-chat);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.msg.bot .msg-bubble {
+  background: #F1F5F9;
+  border-bottom-left-radius: 6px;
+}
+
+.msg.user .msg-bubble {
+  background: linear-gradient(135deg, #6366F1, #7C3AED);
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.msg-time {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.msg.user .msg-time { text-align: right; }
+
+.msg-card {
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: var(--font-chat);
+}
+
+.msg-card-title {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-card-body {
+  font-size: 14px;
+  color: #1E293B;
+  font-weight: 500;
+}
+
+.msg-card-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #F1F5F9;
+  font-size: 12px;
+  color: #10B981;
+  font-weight: 500;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #F1F5F9;
+  border-radius: 18px;
+  border-bottom-left-radius: 6px;
+  width: fit-content;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94A3B8;
+  animation: typingBounce 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+.chat-input-area {
+  padding: 16px 20px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.chat-quick-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.quick-action {
+  padding: 6px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  font-family: var(--font-chat);
+}
+
+.quick-action:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4F46E5;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  font-family: var(--font-chat);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #F8FAFC;
+}
+
+.chat-input:focus {
+  border-color: #6366F1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1, #7C3AED);
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.chat-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW 2: AGENT WORKSPACE
+   ═══════════════════════════════════════════════════════════════ */
+.workspace-view {
+  flex-direction: row;
+  background: var(--bg-primary);
+}
+
+.ws-sidebar {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ws-sidebar-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ws-sidebar-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ws-stat {
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.ws-stat-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.ws-stat-label {
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.ws-session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.ws-session-item {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+
+.ws-session-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.ws-session-item.active {
+  background: var(--accent-subtle);
+  border-color: var(--border-accent);
+}
+
+.ws-session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ws-session-name {
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-session-priority {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.priority-high { background: var(--danger); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+.priority-medium { background: var(--warning); }
+.priority-low { background: var(--success); }
+
+.ws-session-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.ws-session-summary {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-session-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ws-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.ws-tag-ai { background: rgba(99, 102, 241, 0.15); color: #A5B4FC; }
+.ws-tag-human { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; }
+.ws-tag-urgent { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; }
+
+/* Workspace Main */
+.ws-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-main-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ws-main-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-main-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.ws-main-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ws-main-info span {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ws-main-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ws-action-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  font-family: var(--font-ui);
+}
+
+.ws-action-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.ws-action-btn.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.ws-chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ws-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  animation: msgIn 0.3s ease;
+}
+
+.ws-msg.bot { align-self: flex-start; }
+.ws-msg.user-msg { align-self: flex-end; }
+
+.ws-msg-bubble {
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ws-msg.bot .ws-msg-bubble {
+  background: var(--bg-tertiary);
+  border-bottom-left-radius: 4px;
+}
+
+.ws-msg.user-msg .ws-msg-bubble {
+  background: var(--accent-subtle);
+  border: 1px solid var(--border-accent);
+  border-bottom-right-radius: 4px;
+}
+
+.ws-msg-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ws-msg-label .ai-badge {
+  padding: 1px 6px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #A5B4FC;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* AI Suggestion Card */
+.ai-suggestion {
+  margin: 12px 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-accent);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  animation: glowPulse 3s infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 12px 0 var(--accent-glow); }
+}
+
+.ai-suggestion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ai-suggestion-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-confidence {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+}
+
+.confidence-high { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+.confidence-med { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+.ai-suggestion-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+
+.ai-suggestion-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ai-btn {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: var(--font-ui);
+}
+
+.ai-btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.ai-btn-primary:hover {
+  background: #5558E6;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.ai-btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.ai-btn-secondary:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Workspace Input */
+.ws-input-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.ws-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ws-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.ws-send-btn {
+  padding: 12px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-ui);
+}
+
+.ws-send-btn:hover {
+  background: #5558E6;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* Workspace Right Panel */
+.ws-panel {
+  width: 320px;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.ws-panel-section {
+  margin-bottom: 24px;
+}
+
+.ws-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.ws-profile-card {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.ws-profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.ws-profile-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ws-profile-value {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.ws-profile-value.vip {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Emotion Chart */
+.emotion-chart {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: relative;
+}
+
+.emotion-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.emotion-segment {
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.emotion-label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.emotion-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.emotion-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.emotion-angry { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.emotion-trend {
+  font-size: 12px;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Action suggestions */
+.ws-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ws-action-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.ws-action-item:hover {
+  border-color: var(--border-accent);
+  background: var(--accent-subtle);
+}
+
+.ws-action-item span {
+  font-size: 13px;
+}
+
+.ws-action-item .action-btn-sm {
+  padding: 4px 10px;
+  background: var(--accent);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW 3: DASHBOARD
+   ═══════════════════════════════════════════════════════════════ */
+.dashboard-view {
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg-primary);
+}
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dash-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.dash-tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+}
+
+.dash-tab.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.dash-time-range {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dash-time-btn {
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.dash-system-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+}
+
+.system-level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+.system-level-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success);
+  font-family: var(--font-mono);
+}
+
+/* KPI Cards */
+.dash-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.kpi-card:hover::before { opacity: 1; }
+.kpi-card:hover { border-color: var(--border-accent); }
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.kpi-trend.up { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+.kpi-trend.down { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+.kpi-trend.good-down { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+
+/* Dashboard Grid */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dash-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dash-card-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dash-card-action {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* Chart placeholder - sparkline */
+.chart-area {
+  height: 160px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding-top: 20px;
+}
+
+.chart-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--accent), rgba(99, 102, 241, 0.3));
+  border-radius: 3px 3px 0 0;
+  transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.chart-bar:hover {
+  background: linear-gradient(180deg, #818CF8, rgba(99, 102, 241, 0.5));
+}
+
+.chart-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.chart-bar:hover::after { opacity: 1; }
+
+/* Intent distribution */
+.intent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.intent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.intent-bar-bg {
+  flex: 1;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.intent-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+}
+
+.intent-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 56px;
+  text-align: right;
+}
+
+.intent-pct {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  width: 36px;
+}
+
+/* Health chain */
+.health-chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.health-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.health-dot.green { background: var(--success); box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+.health-dot.yellow { background: var(--warning); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); animation: pulse 1s infinite; }
+
+.health-arrow {
+  color: var(--text-tertiary);
+  font-size: 16px;
+  margin: 0 4px;
+}
+
+/* Alerts */
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.alert-item.warn { border-color: var(--warning); }
+.alert-item.ok { border-color: var(--success); }
+.alert-item.info { border-color: var(--info); }
+
+.alert-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  margin-top: 4px;
+}
+
+/* Cost Section */
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.cost-item {
+  text-align: center;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.cost-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cost-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.cost-pct {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1200px) {
+  .dash-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .ws-panel { display: none; }
+}
+
+@media (max-width: 768px) {
+  .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ws-sidebar { width: 220px; }
+  .nav-subtitle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav class="nav-container">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <div class="nav-logo">N</div>
+      <span class="nav-title">NexusAI</span>
+      <span class="nav-subtitle">智能客服系统</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchView('chat')">用户对话</button>
+      <button class="nav-tab" onclick="switchView('workspace')">坐席工作台</button>
+      <button class="nav-tab" onclick="switchView('dashboard')">运营大盘</button>
+    </div>
+    <div class="nav-status">
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        系统正常
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main-content">
+
+  <!-- VIEW 1: Chat -->
+  <section class="view chat-view active" id="view-chat">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-avatar">🤖</div>
+        <div class="chat-header-info">
+          <h3>AI 智能助手</h3>
+          <span>在线</span>
+        </div>
+      </div>
+      <div class="chat-messages">
+        <div class="msg bot" style="animation-delay:0.1s">
+          <div class="msg-bubble">您好！我是您的智能客服助手，请问有什么可以帮到您？</div>
+          <span class="msg-time">14:02</span>
+        </div>
+        <div class="msg user" style="animation-delay:0.2s">
+          <div class="msg-bubble">我前天买的商品降价了，可以申请价保吗？</div>
+          <span class="msg-time">14:02</span>
+        </div>
+        <div class="msg bot" style="animation-delay:0.3s">
+          <div class="msg-bubble">好的，我来帮您查询价保资格。请问您需要价保的是以下这笔订单吗？</div>
+          <div class="msg-card">
+            <div class="msg-card-title">📦 订单信息</div>
+            <div class="msg-card-body">
+              订单号: #20241108-89012<br>
+              商品: Dyson V15 吸尘器<br>
+              支付金额: ¥3,299
+            </div>
+            <div class="msg-card-footer">✅ 符合7天价保规则 · 差价 ¥200</div>
+          </div>
+          <span class="msg-time">14:02</span>
+        </div>
+        <div class="msg user" style="animation-delay:0.4s">
+          <div class="msg-bubble">对，就是这个</div>
+          <span class="msg-time">14:03</span>
+        </div>
+        <div class="msg bot" style="animation-delay:0.5s">
+          <div class="msg-bubble">已为您提交价保申请，差价 <strong>¥200</strong> 将在 1-3 个工作日内退还至您的原支付账户。您可以在「我的订单→售后」中查看进度 🎉</div>
+          <span class="msg-time">14:03</span>
+        </div>
+        <div class="msg bot">
+          <div class="typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-quick-actions">
+          <span class="quick-action">📦 查物流</span>
+          <span class="quick-action">💰 退换货</span>
+          <span class="quick-action">🧾 开发票</span>
+          <span class="quick-action">👤 转人工</span>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" type="text" placeholder="输入您的问题...">
+          <button class="chat-send-btn">➤</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 2: Workspace -->
+  <section class="view workspace-view" id="view-workspace">
+    <aside class="ws-sidebar">
+      <div class="ws-sidebar-header">
+        <h3>会话列表</h3>
+        <div class="ws-sidebar-stats">
+          <div class="ws-stat">
+            <div class="ws-stat-value">5</div>
+            <div class="ws-stat-label">进行中</div>
+          </div>
+          <div class="ws-stat">
+            <div class="ws-stat-value">12</div>
+            <div class="ws-stat-label">排队中</div>
+          </div>
+        </div>
+      </div>
+      <div class="ws-session-list">
+        <div class="ws-session-item active">
+          <div class="ws-session-top">
+            <span class="ws-session-name"><span class="ws-session-priority priority-high"></span>王**</span>
+            <span class="ws-session-time">2:34</span>
+          </div>
+          <div class="ws-session-summary">投诉物流延迟,情绪激动,要求赔偿</div>
+          <div class="ws-session-tags"><span class="ws-tag ws-tag-urgent">紧急</span><span class="ws-tag ws-tag-human">人工</span></div>
+        </div>
+        <div class="ws-session-item">
+          <div class="ws-session-top">
+            <span class="ws-session-name"><span class="ws-session-priority priority-medium"></span>李**</span>
+            <span class="ws-session-time">1:12</span>
+          </div>
+          <div class="ws-session-summary">咨询退货运费承担问题</div>
+          <div class="ws-session-tags"><span class="ws-tag ws-tag-human">人工</span></div>
+        </div>
+        <div class="ws-session-item">
+          <div class="ws-session-top">
+            <span class="ws-session-name"><span class="ws-session-priority priority-low"></span>张**</span>
+            <span class="ws-session-time">0:45</span>
+          </div>
+          <div class="ws-session-summary">查询物流进度</div>
+          <div class="ws-session-tags"><span class="ws-tag ws-tag-ai">AI处理中</span></div>
+        </div>
+        <div class="ws-session-item">
+          <div class="ws-session-top">
+            <span class="ws-session-name"><span class="ws-session-priority priority-low"></span>赵**</span>
+            <span class="ws-session-time">0:23</span>
+          </div>
+          <div class="ws-session-summary">价保申请</div>
+          <div class="ws-session-tags"><span class="ws-tag ws-tag-ai">AI处理中</span></div>
+        </div>
+        <div class="ws-session-item">
+          <div class="ws-session-top">
+            <span class="ws-session-name"><span class="ws-session-priority priority-medium"></span>陈**</span>
+            <span class="ws-session-time">3:56</span>
+          </div>
+          <div class="ws-session-summary">发票开具问题,信息有误</div>
+          <div class="ws-session-tags"><span class="ws-tag ws-tag-human">人工</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="ws-main">
+      <div class="ws-main-header">
+        <div class="ws-main-user">
+          <div class="ws-main-avatar">王</div>
+          <div class="ws-main-info">
+            <h4>王** · 投诉物流延迟</h4>
+            <span>会话时长 2:34 · 第3轮 · 已升级</span>
+          </div>
+        </div>
+        <div class="ws-main-actions">
+          <button class="ws-action-btn">📋 创建工单</button>
+          <button class="ws-action-btn">↗️ 转接</button>
+          <button class="ws-action-btn danger">⏸ 挂起</button>
+        </div>
+      </div>
+
+      <div class="ws-chat-area">
+        <div class="ws-msg user-msg">
+          <span class="ws-msg-label">用户 · 14:01</span>
+          <div class="ws-msg-bubble">我的快递都3天了还没到，物流一直不更新，什么破服务！</div>
+        </div>
+        <div class="ws-msg bot">
+          <span class="ws-msg-label"><span class="ai-badge">AI</span> 自动回复 · 14:01</span>
+          <div class="ws-msg-bubble">非常理解您的着急，已帮您催促快递员优先派送，预计明天可以送达。</div>
+        </div>
+        <div class="ws-msg user-msg">
+          <span class="ws-msg-label">用户 · 14:02</span>
+          <div class="ws-msg-bubble">说了一堆废话！我要投诉到消协！必须给我赔偿！</div>
+        </div>
+        <div class="ws-msg bot">
+          <span class="ws-msg-label"><span class="ai-badge">AI</span> 安抚 · 14:02 · ⚡ 已触发升级</span>
+          <div class="ws-msg-bubble">非常抱歉给您带来如此糟糕的体验，正在为您转接专属客服处理...</div>
+        </div>
+
+        <div class="ai-suggestion">
+          <div class="ai-suggestion-header">
+            <span class="ai-suggestion-title">🤖 AI 建议回复</span>
+            <span class="ai-confidence confidence-high">置信度 92%</span>
+          </div>
+          <div class="ai-suggestion-text">
+            王先生您好，我是专属客服小张。非常抱歉物流延迟给您带来的不便，我已经核实了您的包裹状态：目前包裹在XX中转站，因双11物流压力导致延迟。为表歉意，我们为您提供以下补偿方案，请您选择：<br><br>
+            1️⃣ 5元无门槛优惠券<br>
+            2️⃣ 运费全额退还（¥8）<br>
+            3️⃣ 优先配送+3元补偿券
+          </div>
+          <div class="ai-suggestion-actions">
+            <button class="ai-btn ai-btn-primary">✓ 一键发送</button>
+            <button class="ai-btn ai-btn-secondary">✎ 编辑后发送</button>
+            <button class="ai-btn ai-btn-secondary">✕ 忽略</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-input-area">
+        <input class="ws-input" type="text" placeholder="输入回复... (Ctrl+/ 触发AI建议)">
+        <button class="ws-send-btn">发送</button>
+      </div>
+    </div>
+
+    <aside class="ws-panel">
+      <div class="ws-panel-section">
+        <div class="ws-panel-title">用户画像</div>
+        <div class="ws-profile-card">
+          <div class="ws-profile-row">
+            <span class="ws-profile-label">等级</span>
+            <span class="ws-profile-value vip">SVIP</span>
+          </div>
+          <div class="ws-profile-row">
+            <span class="ws-profile-label">LTV</span>
+            <span class="ws-profile-value">¥12,800</span>
+          </div>
+          <div class="ws-profile-row">
+            <span class="ws-profile-label">历史投诉</span>
+            <span class="ws-profile-value">2次</span>
+          </div>
+          <div class="ws-profile-row">
+            <span class="ws-profile-label">满意度</span>
+            <span class="ws-profile-value">4.1/5</span>
+          </div>
+          <div class="ws-profile-row">
+            <span class="ws-profile-label">本单金额</span>
+            <span class="ws-profile-value">¥599</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-panel-section">
+        <div class="ws-panel-title">情绪趋势</div>
+        <div class="emotion-chart">
+          <div class="emotion-bar">
+            <div class="emotion-segment" style="width:33%;background:var(--text-tertiary);border-radius:4px 0 0 4px"></div>
+            <div class="emotion-segment" style="width:33%;background:var(--warning)"></div>
+            <div class="emotion-segment" style="width:34%;background:var(--danger);border-radius:0 4px 4px 0"></div>
+          </div>
+          <div class="emotion-label">
+            <span>第1轮 · 中性</span>
+            <span>第2轮 · 不满</span>
+            <span>第3轮 · 愤怒</span>
+          </div>
+          <div class="emotion-current">
+            <span class="emotion-badge emotion-angry">🤬 愤怒</span>
+            <span class="emotion-trend">↑ 持续升温</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-panel-section">
+        <div class="ws-panel-title">AI 建议动作</div>
+        <div class="ws-actions-list">
+          <div class="ws-action-item">
+            <span>🎫 5元无门槛券</span>
+            <span class="action-btn-sm">发放</span>
+          </div>
+          <div class="ws-action-item">
+            <span>💰 退运费 ¥8</span>
+            <span class="action-btn-sm">发放</span>
+          </div>
+          <div class="ws-action-item">
+            <span>⬆️ 升级主管处理</span>
+            <span class="action-btn-sm">转接</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-panel-section">
+        <div class="ws-panel-title">⚠️ 风险提示</div>
+        <div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:12px;color:#FCA5A5;line-height:1.5;">
+          用户提及"消协"关键词<br>
+          SVIP用户，高LTV，建议优先满足
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- VIEW 3: Dashboard -->
+  <section class="view dashboard-view" id="view-dashboard">
+    <div class="dash-header">
+      <div class="dash-tabs">
+        <button class="dash-tab active">业务全景</button>
+        <button class="dash-tab">技术运行</button>
+        <button class="dash-tab">成本分析</button>
+      </div>
+      <div class="dash-time-range">
+        <span class="dash-time-btn">今日</span>
+        <span class="dash-time-btn" style="background:var(--accent);color:white;border-color:var(--accent)">实时</span>
+        <div class="dash-system-level">
+          <span class="system-level-dot"></span>
+          <span class="system-level-text">L0 GREEN</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="dash-kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">AI 自助解决率</div>
+        <div class="kpi-value">72.3%</div>
+        <span class="kpi-trend up">▲ +2.1%</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">平均首响</div>
+        <div class="kpi-value">1.8s</div>
+        <span class="kpi-trend good-down">▼ -0.3s</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">用户满意度</div>
+        <div class="kpi-value">4.3</div>
+        <span class="kpi-trend up">▲ +0.1</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">转人工率</div>
+        <div class="kpi-value">27.7%</div>
+        <span class="kpi-trend good-down">▼ -2.1%</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">日会话量</div>
+        <div class="kpi-value">98.2K</div>
+        <span class="kpi-trend up">▲ +5.3%</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">单会话成本</div>
+        <div class="kpi-value">¥0.61</div>
+        <span class="kpi-trend good-down">▼ -¥0.07</span>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">24h 会话量趋势</span>
+          <span class="dash-card-action">查看详情 →</span>
+        </div>
+        <div class="chart-area" id="chart-volume"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">意图分布</span>
+          <span class="dash-card-action">全部意图 →</span>
+        </div>
+        <div class="intent-list">
+          <div class="intent-item">
+            <span class="intent-label">物流查询</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:32%;background:var(--info)">物流</div></div>
+            <span class="intent-pct">32%</span>
+          </div>
+          <div class="intent-item">
+            <span class="intent-label">退换货</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:24%;background:var(--accent)">退换</div></div>
+            <span class="intent-pct">24%</span>
+          </div>
+          <div class="intent-item">
+            <span class="intent-label">价保申请</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:18%;background:#8B5CF6">价保</div></div>
+            <span class="intent-pct">18%</span>
+          </div>
+          <div class="intent-item">
+            <span class="intent-label">FAQ咨询</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:15%;background:var(--success)">FAQ</div></div>
+            <span class="intent-pct">15%</span>
+          </div>
+          <div class="intent-item">
+            <span class="intent-label">投诉</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:8%;background:var(--danger)"></div></div>
+            <span class="intent-pct">8%</span>
+          </div>
+          <div class="intent-item">
+            <span class="intent-label">其他</span>
+            <div class="intent-bar-bg"><div class="intent-bar-fill" style="width:3%;background:var(--text-tertiary)"></div></div>
+            <span class="intent-pct">3%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">系统健康链路</span>
+        </div>
+        <div class="health-chain">
+          <div class="health-node"><span class="health-dot green"></span>网关层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot green"></span>输入层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot green"></span>意图层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot green"></span>规划层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot yellow"></span>执行层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot green"></span>推理层</div>
+          <span class="health-arrow">→</span>
+          <div class="health-node"><span class="health-dot green"></span>反馈层</div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="dash-card-title" style="font-size:13px;margin-bottom:12px">月度成本构成</div>
+          <div class="cost-grid">
+            <div class="cost-item">
+              <div class="cost-value">¥2.1万</div>
+              <div class="cost-label">大模型API</div>
+              <div class="cost-pct">36%</div>
+            </div>
+            <div class="cost-item">
+              <div class="cost-value">¥1.5万</div>
+              <div class="cost-label">本地推理GPU</div>
+              <div class="cost-pct">26%</div>
+            </div>
+            <div class="cost-item">
+              <div class="cost-value">¥1.8万</div>
+              <div class="cost-label">基础设施</div>
+              <div class="cost-pct">31%</div>
+            </div>
+            <div class="cost-item">
+              <div class="cost-value">¥0.4万</div>
+              <div class="cost-label">存储/向量库</div>
+              <div class="cost-pct">7%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">实时告警</span>
+          <span class="dash-card-action">全部 →</span>
+        </div>
+        <div class="alert-list">
+          <div class="alert-item warn">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+              CRM API 延迟升高至 2.3s（阈值 2.0s）
+              <div class="alert-time">2 分钟前</div>
+            </div>
+          </div>
+          <div class="alert-item ok">
+            <span class="alert-icon">✅</span>
+            <div class="alert-content">
+              LLM API (Claude) 已恢复正常
+              <div class="alert-time">8 分钟前</div>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-content">
+              语义缓存命中率下降至 58%（目标 60%）
+              <div class="alert-time">15 分钟前</div>
+            </div>
+          </div>
+          <div class="alert-item ok">
+            <span class="alert-icon">✅</span>
+            <div class="alert-content">
+              自动扩容完成: Pod 12→18
+              <div class="alert-time">23 分钟前</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ═══ VIEW SWITCHING ═══
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══ GENERATE CHART BARS ═══
+function generateChart() {
+  const chart = document.getElementById('chart-volume');
+  const hours = 24;
+  const data = [12,8,5,3,4,6,18,35,52,68,72,78,82,75,71,68,82,95,88,76,62,48,35,22];
+  const max = Math.max(...data);
+
+  for (let i = 0; i < hours; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.height = (data[i] / max * 100) + '%';
+    bar.style.animationDelay = (i * 30) + 'ms';
+    bar.title = `${i}:00 - ${(data[i] * 1.2).toFixed(0)}K 会话`;
+    chart.appendChild(bar);
+  }
+}
+
+// ═══ ANIMATE NUMBERS (KPI scroll effect) ═══
+function animateValue(element, start, end, duration, suffix = '') {
+  const startTime = performance.now();
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = start + (end - start) * eased;
+
+    if (suffix === '%') element.textContent = current.toFixed(1) + '%';
+    else if (suffix === 's') element.textContent = current.toFixed(1) + 's';
+    else if (suffix === 'K') element.textContent = current.toFixed(1) + 'K';
+    else if (suffix === '¥') element.textContent = '¥' + current.toFixed(2);
+    else element.textContent = current.toFixed(1);
+
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', () => {
+  generateChart();
+
+  // Animate KPI values on dashboard view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const kpis = entry.target.querySelectorAll('.kpi-value');
+        kpis.forEach((kpi, i) => {
+          const values = [[0, 72.3, '%'], [0, 1.8, 's'], [0, 4.3, ''], [0, 27.7, '%'], [0, 98.2, 'K'], [0, 0.61, '¥']];
+          setTimeout(() => {
+            animateValue(kpi, values[i][0], values[i][1], 1200, values[i][2]);
+          }, i * 100);
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  });
+
+  const kpiGrid = document.querySelector('.dash-kpi-grid');
+  if (kpiGrid) observer.observe(kpiGrid);
+
+  // Animate intent bars
+  setTimeout(() => {
+    document.querySelectorAll('.intent-bar-fill').forEach(bar => {
+      const width = bar.style.width;
+      bar.style.width = '0%';
+      setTimeout(() => { bar.style.width = width; }, 100);
+    });
+  }, 300);
+});
+
+// ═══ CHAT INTERACTION ═══
+document.querySelector('.chat-input')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && this.value.trim()) {
+    const messages = document.querySelector('.chat-messages');
+    const typing = messages.querySelector('.typing-indicator')?.parentElement;
+    if (typing) typing.remove();
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg user';
+    msgDiv.innerHTML = `<div class="msg-bubble">${this.value}</div><span class="msg-time">${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>`;
+    messages.appendChild(msgDiv);
+    this.value = '';
+    messages.scrollTop = messages.scrollHeight;
+
+    // Simulate AI response
+    setTimeout(() => {
+      const botDiv = document.createElement('div');
+      botDiv.className = 'msg bot';
+      botDiv.innerHTML = `<div class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+      messages.appendChild(botDiv);
+      messages.scrollTop = messages.scrollHeight;
+
+      setTimeout(() => {
+        botDiv.innerHTML = `<div class="msg-bubble">已收到您的消息，正在为您处理中...</div><span class="msg-time">${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>`;
+      }, 1500);
+    }, 500);
+  }
+});
+</script>
+</body>
+</html>
