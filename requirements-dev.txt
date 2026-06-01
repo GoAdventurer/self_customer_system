@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════════════
+# NexusAI 智能客服系统 - 开发环境依赖
+# ═══════════════════════════════════════════════════════════════
+
+# 引入生产依赖
+-r requirements.txt
+
+# ── 测试 ──
+pytest>=7.4.0               # 测试框架
+pytest-asyncio>=0.21.0      # 异步测试支持
+pytest-cov>=4.1.0           # 覆盖率报告
+pytest-mock>=3.12.0         # Mock工具
+
+# ── 代码质量 ──
+ruff>=0.1.8                 # Linter + Formatter (替代 flake8+black+isort)
+mypy>=1.7.0                 # 静态类型检查
+pre-commit>=3.6.0           # Git hooks 管理
+
+# ── 调试/开发工具 ──
+ipython>=8.18.0             # 增强REPL
+rich>=13.7.0                # 终端美化输出 (日志/表格)
+httpie>=3.2.2               # CLI HTTP客户端 (替代curl, 调试API)

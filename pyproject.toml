@@ -1,0 +1,67 @@
+[project]
+name = "nexusai-customer-service"
+version = "0.1.0"
+description = "企业级智能客服系统 - 面向大型电商的全渠道、多租户、人机协同智能客服"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "NexusAI Team"},
+]
+readme = "README.md"
+
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "redis>=5.0.0",
+    "httpx>=0.25.0",
+    "python-multipart>=0.0.6",
+    "pyyaml>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "ruff>=0.1.8",
+    "mypy>=1.7.0",
+    "pre-commit>=3.6.0",
+]
+# Phase2: 模型推理 + 向量检索
+ml = [
+    "openai>=1.6.0",
+    "anthropic>=0.18.0",
+    "sentence-transformers>=2.2.0",
+    "torch>=2.1.0",
+]
+# Phase2: 可观测性
+observability = [
+    "opentelemetry-api>=1.21.0",
+    "opentelemetry-sdk>=1.21.0",
+    "opentelemetry-instrumentation-fastapi>=0.42b0",
+    "prometheus-client>=0.19.0",
+    "structlog>=23.2.0",
+]
+
+[project.scripts]
+nexusai-server = "scripts.run_server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"

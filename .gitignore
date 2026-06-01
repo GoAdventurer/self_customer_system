@@ -1,0 +1,44 @@
+# ═══ Python ═══
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ═══ 虚拟环境 ═══
+.venv/
+venv/
+env/
+
+# ═══ IDE ═══
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ═══ 测试/覆盖率 ═══
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ═══ 环境变量(敏感信息) ═══
+.env
+.env.local
+.env.production
+
+# ═══ 系统文件 ═══
+.DS_Store
+Thumbs.db
+
+# ═══ 日志 ═══
+*.log
+logs/
+
+# ═══ 运行态数据(长期记忆SQLite等) ═══
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/logs/

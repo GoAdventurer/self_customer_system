@@ -1,0 +1,39 @@
+# ═══════════════════════════════════════════════════════════════
+# NexusAI 智能客服系统 - 生产环境依赖
+# ═══════════════════════════════════════════════════════════════
+
+# ── 核心框架 ──
+fastapi>=0.104.0            # API网关层 Web框架
+uvicorn[standard]>=0.24.0   # ASGI服务器 (生产用 gunicorn+uvicorn workers)
+pydantic>=2.5.0             # 数据校验/序列化 (API请求响应模型)
+
+# ── 异步HTTP客户端 ──
+httpx>=0.25.0               # 调用外部模型API/CRM/支付网关
+
+# ── 数据存储 ──
+redis>=5.0.0                # 会话状态 + L1精确缓存
+# psycopg[binary]>=3.1.0    # PostgreSQL (长流程/工单状态持久化) [未启用]
+# sqlalchemy>=2.0.0         # ORM (审计日志/知识库管理) [未启用]
+
+# ── 向量检索 (RAG/语义缓存L2) ──
+faiss-cpu>=1.7.0              # FAISS向量数据库(CPU版,本地高性能近邻检索)
+numpy>=1.24.0                 # FAISS依赖+向量计算
+requests>=2.31.0              # Ollama Embedding同步调用
+# faiss-gpu>=1.7.0            # GPU版本(有NVIDIA显卡时替换faiss-cpu)
+
+# ── 模型推理 ──
+# openai>=1.6.0             # OpenAI兼容API调用 (Qwen/vLLM均支持此协议)
+# anthropic>=0.18.0         # Claude API调用 [LARGE/XLARGE模型]
+# transformers>=4.36.0      # 本地BERT分类器推理 [意图层L2] [Phase2启用]
+# torch>=2.1.0              # PyTorch推理后端 [Phase2启用]
+
+# ── 可观测性 ──
+# opentelemetry-api>=1.21.0         # 分布式链路追踪 [Phase2启用]
+# opentelemetry-sdk>=1.21.0         # OTel SDK
+# opentelemetry-instrumentation-fastapi>=0.42b0  # FastAPI自动埋点
+# prometheus-client>=0.19.0         # Metrics导出 [Phase2启用]
+# structlog>=23.2.0                 # 结构化日志 [Phase2启用]
+
+# ── 工具库 ──
+python-multipart>=0.0.6     # FastAPI文件上传支持
+pyyaml>=6.0.1               # YAML配置文件解析 (CRM字段映射等)

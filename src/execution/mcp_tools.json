@@ -1,0 +1,118 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/schema/mcp-schema.json",
+  "name": "nexusai-customer-service-tools",
+  "version": "0.1.0",
+  "description": "NexusAI智能客服系统 - 执行层工具集(MCP Server声明)",
+  "tools": [
+    {
+      "name": "order_service.query",
+      "description": "查询订单详情。根据订单号返回订单状态、金额、商品、签收时间等完整信息。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "订单号(如 #20241108-89012)"
+          }
+        },
+        "required": ["order_id"]
+      }
+    },
+    {
+      "name": "rule_engine.validate_refund",
+      "description": "校验退款资格。检查订单是否在退货时间窗内、商品状态是否符合要求。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "订单号"
+          },
+          "reason": {
+            "type": "string",
+            "description": "退款原因(质量/不喜欢/不合适/发错/破损)"
+          }
+        },
+        "required": ["order_id"]
+      }
+    },
+    {
+      "name": "risk_service.check",
+      "description": "风控校验。对退款/支付等敏感操作做风险评估，检测刷单、异常退款等欺诈行为。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string", "description": "用户ID"},
+          "action": {"type": "string", "description": "操作类型(refund/payment/modify)"},
+          "amount": {"type": "number", "description": "涉及金额(元)"}
+        },
+        "required": ["user_id", "action", "amount"]
+      }
+    },
+    {
+      "name": "payment_gateway.refund",
+      "description": "发起退款(不可逆操作!)。向支付网关提交退款请求，资金将原路退回用户账户。执行前必须经过用户确认(HITL节点)。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {"type": "string", "description": "订单号"},
+          "amount": {"type": "number", "description": "退款金额(元)"},
+          "reason": {"type": "string", "description": "退款原因"}
+        },
+        "required": ["order_id", "amount", "reason"]
+      }
+    },
+    {
+      "name": "crm_service.update",
+      "description": "CRM回写。将本次客服处理的结果(工单、沟通记录、处理动作)写入CRM系统。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session_id": {"type": "string", "description": "客服会话ID"},
+          "action": {"type": "string", "description": "执行的动作(如refund_approved)"},
+          "result": {"type": "string", "description": "处理结果摘要"}
+        },
+        "required": ["session_id", "action", "result"]
+      }
+    },
+    {
+      "name": "notify_service.push",
+      "description": "向用户推送通知。支持App Push、短信、站内信三种通道，自动降级(Push失败走短信)。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {"type": "string", "description": "目标用户ID"},
+          "message": {"type": "string", "description": "通知文本内容"},
+          "channel": {
+            "type": "string",
+            "description": "通知渠道",
+            "enum": ["push", "sms", "inbox"]
+          }
+        },
+        "required": ["user_id", "message"]
+      }
+    },
+    {
+      "name": "logistics_service.query",
+      "description": "查询物流轨迹。返回包裹的实时位置、运输状态和历史轨迹节点。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {"type": "string", "description": "订单号"}
+        },
+        "required": ["order_id"]
+      }
+    },
+    {
+      "name": "price_protect_service.calculate",
+      "description": "价保差价计算。校验订单是否在价保期内，计算当前价格与购买价格的差值。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {"type": "string", "description": "订单号"}
+        },
+        "required": ["order_id"]
+      }
+    }
+  ]
+}
