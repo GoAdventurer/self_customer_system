@@ -1361,6 +1361,44 @@ def create_price_protect_dag() -> DAGDefinition:
     )
 
 
+def create_logistics_query_dag() -> DAGDefinition:
+    """创建物流查询流程 DAG 模板 — 2步快速通道，纯只读无副作用
+
+    【场景说明】
+    用户携带订单号查询物流状态（如"订单ORD12345到哪了"），
+    系统先查订单确认存在，再查物流轨迹返回最新状态。
+
+    【拓扑结构 — 纯线性链】
+
+    ┌─────────────┐    ┌──────────────────┐
+    │ query_order │───▶│ query_logistics  │
+    └─────────────┘    └──────────────────┘
+      查询订单           查询物流轨迹
+
+    【与退款/价保 DAG 的区别】
+    - 全部为 READ 操作，无 HITL / 无 Saga / 无不可逆
+    - 耗时 < 1s（两次只读 API 调用）
+    - 失败影响: 仅无法展示物流详情，不涉及资金
+    """
+    return DAGDefinition(
+        graph_id="logistics_query_flow",
+        name="物流查询快速通道",
+        version="1.0.0",
+        entry_node="query_order",
+        nodes=[
+            # Step 1: 查询订单（确认订单存在 + 获取发货状态）
+            DAGNode(node_id="query_order", node_type=NodeType.ACTION,
+                    name="查询订单", handler="order_service.query"),
+            # Step 2: 查询物流轨迹（快递单号、位置、ETA）
+            DAGNode(node_id="query_logistics", node_type=NodeType.ACTION,
+                    name="查询物流轨迹", handler="logistics_service.query"),
+        ],
+        edges=[
+            DAGEdge(from_node="query_order", to_node="query_logistics"),
+        ],
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Part 5: DAG 执行引擎 — 核心调度与执行逻辑
 # ═══════════════════════════════════════════════════════════════════════════════════
@@ -1453,6 +1491,7 @@ class DAGEngine:
     FLOW_REGISTRY: dict[str, Callable[[], DAGDefinition]] = {
         "REFUND": create_refund_dag,              # 退款意图 → 7步退款全流程(含HITL)
         "PRICE_PROTECT": create_price_protect_dag,  # 价保意图 → 4步价保快速通道
+        "LOGISTICS": create_logistics_query_dag,    # 物流意图 → 2步快速查询(有order_id时)
     }
 
     def __init__(self):

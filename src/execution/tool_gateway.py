@@ -418,6 +418,8 @@ def _mock_query_order(params: dict) -> dict:
         "product": "Dyson V15 吸尘器",
         "delivered_at": "2024-11-08T14:30:00Z",
         "within_return_period": True,
+        "shipping_status": "shipped",          # 发货状态: pending/shipped/delivered
+        "shipped_at": "2024-11-07T10:00:00Z",  # 发货时间
     }
 
 
@@ -466,6 +468,8 @@ def _mock_query_logistics(params: dict) -> dict:
         "status": "in_transit",
         "current_location": "杭州转运中心",
         "estimated_delivery": "2024-11-10",
+        "shipped_at": "2024-11-07T10:00:00Z",
+        "can_deliver_to": ["全国"],
         "updates": [
             {"time": "2024-11-08 10:00", "desc": "快递员已揽收"},
             {"time": "2024-11-08 18:00", "desc": "到达杭州转运中心"},

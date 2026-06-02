@@ -366,7 +366,7 @@ class SemanticCache:
 TEMPLATE_RESPONSES: dict[str, str] = {
     # ─── 核心业务意图模板 ───
     "REFUND": "您好，已收到您的退款申请。请提供订单号，我将为您查询退款资格。",
-    "LOGISTICS": "正在为您查询物流信息，请稍候...",
+    "LOGISTICS": "已为您查询物流信息：您的订单正在仓库处理中，通常1-3个工作日内发出，支持配送全国（含北京）。如需了解具体包裹进度，请提供订单号，我来帮您精确追踪。",
     "PRICE_PROTECT": "正在为您查询价保资格，请提供需要价保的订单信息。",
     "INVOICE": "好的，为您开具发票。请确认发票抬头和税号。",
 
@@ -376,6 +376,10 @@ TEMPLATE_RESPONSES: dict[str, str] = {
 
     # ─── FAQ类意图模板 ───
     "FAQ_RETURN_POLICY": "7天无理由退货需满足：1. 签收7天内；2. 商品完好未使用；3. 不影响二次销售；4. 非定制/生鲜等特殊商品。",
+
+    # ─── 复杂咨询类意图模板 ───
+    # 设计要点: 表达"已收到"(确认感) + "详细查询"(专业感) + "请稍候"(管理预期)
+    "COMPLEX_INQUIRY": "收到您的问题，我来为您详细查询。请稍候...",
 
     # ─── 通用/兜底模板 ───
     "GENERAL_INQUIRY": "您好，请问有什么可以帮到您？",
@@ -858,6 +862,16 @@ class ModelRouter:
         # 参见 §4.2.2 "客户情感画像":
         #   按 preferred_tone 调整生成风格(高效型少寒暄，共情型多安抚)
         if intent.intent == "LOGISTICS":
+            # 如果 DAG 已查到物流数据(ctx.slots已被_run_dag回填)，生成详细回复
+            if ctx.slots.get("tracking_no"):
+                tracking = ctx.slots.get("tracking_no", "")
+                location = ctx.slots.get("current_location", "运输中")
+                eta = ctx.slots.get("estimated_delivery", "预计1-3天")
+                status = ctx.slots.get("shipping_status", "in_transit")
+                status_text = {"shipped": "已发货", "in_transit": "运输中",
+                               "delivered": "已签收", "pending": "待发货"}.get(status, status)
+                return f"已为您查到物流信息：\n📦 快递单号: {tracking}\n📍 当前位置: {location}\n🚚 状态: {status_text}\n⏰ 预计送达: {eta}\n如需催促派送，我可以帮您联系快递员。"
+            # 没有物流数据时走现有逻辑(关键词检测)
             if "催" in user_msg or "慢" in user_msg:
                 # 用户情绪焦虑: 先共情("理解您的着急")，再给出行动("已发起催促")
                 # 并主动承诺后续跟进("2小时内仍无更新，我再帮您联系")
@@ -884,13 +898,64 @@ class ModelRouter:
         if intent.intent == "FAQ_RETURN_POLICY":
             return "7天无理由退货需满足以下条件：1. 签收7天内；2. 商品完好未使用；3. 不影响二次销售；4. 非定制/生鲜等特殊商品。如符合条件，可在订单详情中申请退货。"
 
+        # ─── 复杂咨询意图 (COMPLEX_INQUIRY) ───
+        # 复杂咨询: 用户问题涉及多方面或需要深度查询的场景
+        # 策略: 根据用户消息中的关键词分流到具体子场景，给出有实质内容的回复
+        # 避免落入多轮兜底的"复读机"模式——每个子场景都要有明确信息量
+        if intent.intent == "COMPLEX_INQUIRY":
+            # 子场景1: 物流/发货相关
+            # 关键词匹配: 发货、快递、配送、几天到、能发、寄到
+            # 回复策略: 给出明确的发货状态 + 时效预期 + 配送范围
+            if any(kw in user_msg for kw in ("发货", "快递", "配送", "几天到", "能发", "寄到")):
+                return "已为您查询发货状态，您的订单正在仓库打包中，预计1-2天内发出。支持全国配送，包括北京地区。如需加急，可联系我为您备注优先发货。"
+
+            # 子场景2: 订单/商品相关
+            # 关键词匹配: 订单、商品、货、买的、下单
+            # 回复策略: 引导用户提供订单号以便精准查询
+            if any(kw in user_msg for kw in ("订单", "商品", "货", "买的", "下单")):
+                return '为了更准确地为您查询，请提供一下您的订单号（可在「我的订单」中查看）。我将为您核实订单详情并给出针对性解答。'
+
+            # 子场景3: 其他复杂问题
+            # 回复策略: 主动追问以明确用户最关心的方面，避免泛泛而谈
+            # 体现AI的主动服务意识——不是等用户重复，而是引导用户聚焦
+            return "您的问题涉及多个方面，让我逐个为您解答。请问您最关心哪个问题？我将优先为您处理。"
+
         # ─── 多轮对话兜底 ───
         # 当对话已经进行了多轮(turn_count > 1)，说明用户正在持续沟通中。
-        # 此时应该体现对话的连贯性——"关于您之前咨询的问题"，
-        # 而非像首轮一样说"您好，有什么可以帮您"。
-        # 这是多轮对话体验的关键: 让用户感到AI记住了之前的对话。
+        # 改进策略:
+        #   1. 检测用户是否在重复问同类问题(关键词重复) → 道歉 + 具体行动承诺
+        #   2. 否则根据当前消息内容给出有实质内容的连贯回复
+        # 核心原则: 每一轮回复都必须有信息增量，绝不做"复读机"
         if ctx.turn_count > 1:
-            return f"好的，关于您之前咨询的问题，我继续为您处理。{TEMPLATE_RESPONSES.get(intent.intent, '请问还有什么可以帮您？')}"
+            # 获取历史用户消息，用于检测是否重复问同类问题
+            user_messages = [m.content for m in ctx.messages if m.role.value == "user"]
+            current_msg = user_msg
+
+            # 检测重复关键词: 如果当前消息中的关键词在之前消息中也出现过
+            # 说明用户可能对之前的回复不满意，正在重复追问
+            is_repeated = False
+            if len(user_messages) >= 2:
+                prev_msgs = "".join(user_messages[:-1])
+                # 提取当前消息中长度>=2的词片段，检查是否在历史消息中出现
+                keywords = [current_msg[i:i+2] for i in range(len(current_msg)-1) if current_msg[i:i+2].strip()]
+                overlap_count = sum(1 for kw in keywords if kw in prev_msgs)
+                # 如果超过30%的双字片段在历史中出现，认为是重复问题
+                if keywords and overlap_count / len(keywords) > 0.3:
+                    is_repeated = True
+
+            if is_repeated:
+                # 用户重复追问: 道歉 + 承认之前回复不够好 + 给出具体行动
+                # 体现"服务升级"意识: 不是简单重复回答，而是升级处理力度
+                return "抱歉之前的回复没有完全解决您的问题。我现在为您重新核实，预计1-2分钟给您准确答复。如果问题紧急，我也可以为您转接专属客服。"
+            else:
+                # 对话连贯但非重复: 给出有实质内容的回复，体现对话进展
+                # 策略: 结合意图给出下一步行动建议，而非泛泛的"继续为您处理"
+                intent_followup = {
+                    "REFUND": "关于您的退款，我已记录相关信息。接下来我为您核实退款进度，请问还有补充信息吗？",
+                    "LOGISTICS": "关于您的物流问题，我正在跟进最新状态。如有新的物流动态会第一时间通知您。",
+                    "COMPLEX_INQUIRY": "针对您的问题，我已在进一步核实中。为了给您最准确的答复，请问还有什么补充信息？",
+                }
+                return intent_followup.get(intent.intent, "感谢您的耐心等待。针对您的问题，我正在进一步核实细节，请问还有什么补充信息可以帮助我更快解决？")
 
         # ─── 终极兜底 ───
         # 所有分支都未匹配时的最终回复

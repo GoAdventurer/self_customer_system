@@ -231,6 +231,32 @@ class CustomerServicePipeline:
         # ═══ Step 0: 获取会话上下文 ═══
         ctx = self.get_or_create_session(session_id)
 
+        # ═══ 已升级会话: 不走AI，只存消息等坐席处理 ═══
+        # 区分两个阶段(对应 §4.3 人机协同状态机):
+        #   ESCALATED: 刚触发升级，坐席尚未接入 → 系统回复"请稍候"安抚用户
+        #   WAITING_AGENT: 坐席已接手(已发过消息) → 系统静默，不插话干扰人机对话
+        if ctx.status == SessionStatus.ESCALATED:
+            ctx.messages.append(Message(role=MessageRole.USER, content=user_input))
+            return PipelineResult(
+                session_id=ctx.session_id,
+                response_text="您的消息已收到，正在为您匹配人工客服，请稍候...",
+                model_used="human_queue",
+                latency_ms=(time.time() - start_time) * 1000,
+                confidence=1.0,
+                suggest_transfer_human=True,
+            )
+        if ctx.status == SessionStatus.WAITING_AGENT:
+            # 坐席已接手：只存消息，不插入系统回复(用户与坐席直接对话)
+            ctx.messages.append(Message(role=MessageRole.USER, content=user_input))
+            return PipelineResult(
+                session_id=ctx.session_id,
+                response_text="",  # 空回复，前端不渲染系统气泡
+                model_used="human_direct",
+                latency_ms=(time.time() - start_time) * 1000,
+                confidence=1.0,
+                suggest_transfer_human=False,
+            )
+
         # ═══ Step 1: 输入层 — PII脱敏 + 归一化 + 注入检测 ═══
         input_result = self.input_processor.process(user_input)
 
@@ -285,9 +311,30 @@ class CustomerServicePipeline:
 
         degraded = self.config.system_level in (SystemLevel.RED, SystemLevel.BLACK)
 
-        # 路径A: 事务型流程(退款/价保) → DAG 编排 + 执行层工具
+        # 路径A: 事务型流程(退款/价保/物流查询) → DAG 编排 + 执行层工具
+        # LOGISTICS 特殊处理: 仅当有 order_id 时走 DAG(无则继续走 RAG 知识路径)
         if intent_result.intent in DAGEngine.FLOW_REGISTRY:
-            self._run_dag(ctx, intent_result, session_id)
+            if intent_result.intent == "LOGISTICS" and not intent_result.slots.get("order_id"):
+                pass  # 无 order_id 的物流查询，跳过 DAG，走后续 RAG 路径
+            else:
+                self._run_dag(ctx, intent_result, session_id)
+                # LOGISTICS DAG 完成后直接用回填数据生成回复(跳过模板兜底)
+                if intent_result.intent == "LOGISTICS" and ctx.slots.get("tracking_no"):
+                    tracking = ctx.slots.get("tracking_no", "")
+                    location = ctx.slots.get("current_location", "运输中")
+                    eta = ctx.slots.get("estimated_delivery", "预计1-3天")
+                    status = ctx.slots.get("shipping_status", "in_transit")
+                    status_map = {"shipped": "已发货", "in_transit": "运输中",
+                                  "delivered": "已签收", "pending": "待发货"}
+                    response_text = (
+                        f"已为您查到物流信息：\n"
+                        f"📦 快递单号: {tracking}\n"
+                        f"📍 当前位置: {location}\n"
+                        f"🚚 状态: {status_map.get(status, status)}\n"
+                        f"⏰ 预计送达: {eta}\n"
+                        f"如需催促派送，我可以帮您联系快递员。"
+                    )
+                    model_used = "dag_logistics"
 
         # 路径B: 导购推荐 → 推荐引擎(召回→排序→理由)
         elif intent_result.intent == "RECOMMEND" and not degraded:
@@ -382,7 +429,8 @@ class CustomerServicePipeline:
                  if ns.status.value == "waiting"), None
             )
         # 把工具返回的关键数据并入槽位(供后续轮次/回复使用)
-        for key in ("order_detail", "refund_amount", "price_diff", "tracking_no"):
+        for key in ("order_detail", "refund_amount", "price_diff", "tracking_no",
+                    "shipping_status", "estimated_delivery", "current_location"):
             if key in dag_execution.global_state:
                 ctx.slots[key] = dag_execution.global_state[key]
 
@@ -523,6 +571,7 @@ class CustomerServicePipeline:
             "emotion_angry": "非常抱歉给您带来不好的体验，正在为您转接专属客服，请稍候。",
             "unresolved_5_turns": "看来这个问题比较复杂，我为您转接人工客服来更好地帮助您。",
             "vip_negative": "尊敬的VIP会员，我为您转接专属客服处理，请稍候。",
+            "service_quality_complaint": "非常抱歉我的回复没有帮到您。为确保您得到满意的解答，正在为您转接人工客服。",
         }
         # 如果reason是加权评分触发的(格式: "weighted_score_0.82")，使用通用话术
         return responses.get(reason, "正在为您转接人工客服，请稍候...")
