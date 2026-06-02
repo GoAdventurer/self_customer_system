@@ -28,12 +28,15 @@ API清单:
     FastAPI: 性能(Starlette+异步)、类型安全(Pydantic)、自动文档(OpenAPI)
 """
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
 import time
 import threading
 
 from ..pipeline import CustomerServicePipeline
+from ..common.models import Message, MessageRole, SessionStatus
 from ..config.settings import SystemLevel, create_default_config
 
 
@@ -188,6 +191,15 @@ app = FastAPI(
     title="NexusAI 智能客服系统",
     version="0.1.0",
     description="企业级智能客服系统 API — 六层架构 MVP 实现",
+)
+
+# CORS 跨域支持(允许前端页面从任意端口/地址访问API)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 全局管线实例(整个进程共享)
@@ -380,6 +392,43 @@ def resume_session(session_id: str, req: ResumeRequest):
     return {"session_id": session_id, "dag_status": status}
 
 
+# ═══════════════════════════════════════════════════════════════
+# 坐席工作台 API — 打通用户对话与人工坐席
+# (注意: /sessions/escalated 必须在 /sessions/{session_id} 之前声明,
+#  否则 FastAPI 会把 "escalated" 当作 session_id 路径参数)
+# ═══════════════════════════════════════════════════════════════
+
+@app.get("/sessions/escalated")
+def list_escalated_sessions():
+    """获取所有已升级(需人工介入)的会话列表。
+
+    坐席工作台前端轮询此接口,实时获取待处理会话队列。
+    """
+    escalated = []
+    for sid, ctx in pipeline._sessions.items():
+        if ctx.status in (SessionStatus.ESCALATED, SessionStatus.WAITING_AGENT):
+            last_msg = ""
+            last_time = ""
+            for m in reversed(ctx.messages):
+                if m.role == MessageRole.USER:
+                    last_msg = m.content[:80]
+                    last_time = m.timestamp.strftime("%H:%M")
+                    break
+            escalated.append({
+                "session_id": sid,
+                "status": ctx.status.value,
+                "last_message": last_msg,
+                "last_time": last_time,
+                "intent": ctx.intent.intent if ctx.intent else None,
+                "emotion": ctx.emotion.value,
+                "emotion_score": ctx.emotion_score,
+                "turn_count": ctx.turn_count,
+                "channel": ctx.channel if hasattr(ctx, "channel") else "web",
+                "user_tier": ctx.user.tier if ctx.user else "normal",
+            })
+    return {"sessions": escalated, "total": len(escalated)}
+
+
 @app.get("/sessions/{session_id}")
 def get_session(session_id: str):
     """
@@ -412,3 +461,92 @@ def get_session(session_id: str):
         "emotion_score": ctx.emotion_score,
         "message_count": len(ctx.messages),
     }
+
+
+@app.get("/sessions/{session_id}/messages")
+def get_session_messages(session_id: str):
+    """获取会话完整消息历史 — 坐席查看用户与AI的对话上下文。"""
+    if session_id not in pipeline._sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    ctx = pipeline._sessions[session_id]
+    messages = []
+    for m in ctx.messages:
+        messages.append({
+            "id": m.message_id,
+            "role": m.role.value,
+            "content": m.content,
+            "time": m.timestamp.strftime("%H:%M:%S"),
+        })
+    return {
+        "session_id": session_id,
+        "status": ctx.status.value,
+        "emotion": ctx.emotion.value,
+        "intent": ctx.intent.intent if ctx.intent else None,
+        "user_tier": ctx.user.tier if ctx.user else "normal",
+        "messages": messages,
+    }
+
+
+class AgentReplyRequest(BaseModel):
+    """坐席回复请求"""
+    message: str = Field(..., min_length=1, max_length=2000)
+
+
+@app.post("/sessions/{session_id}/agent-reply")
+def agent_reply(session_id: str, req: AgentReplyRequest):
+    """坐席回复用户 — 人工坐席接入并发送消息。
+
+    将坐席的消息追加到会话历史，用户侧轮询时即可看到。
+    同时将会话状态标记为 ACTIVE(已有人工接手)。
+    """
+    if session_id not in pipeline._sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    ctx = pipeline._sessions[session_id]
+    # 追加坐席消息
+    ctx.messages.append(Message(
+        role=MessageRole.AGENT,
+        content=req.message,
+    ))
+    # 坐席接入后标记为 WAITING_AGENT(仍在人工服务中,用户消息不走AI)
+    if ctx.status == SessionStatus.ESCALATED:
+        ctx.status = SessionStatus.WAITING_AGENT
+    return {
+        "session_id": session_id,
+        "status": "sent",
+        "message_count": len(ctx.messages),
+    }
+
+
+@app.get("/sessions/{session_id}/new-messages")
+def get_new_messages(session_id: str, after: int = 0):
+    """获取会话中的新消息(用户侧轮询用)。
+
+    Args:
+        after: 上次已收到的消息索引,只返回此索引之后的新消息。
+    """
+    if session_id not in pipeline._sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    ctx = pipeline._sessions[session_id]
+    new_msgs = []
+    for i, m in enumerate(ctx.messages):
+        if i >= after:
+            new_msgs.append({
+                "index": i,
+                "role": m.role.value,
+                "content": m.content,
+                "time": m.timestamp.strftime("%H:%M:%S"),
+            })
+    return {"session_id": session_id, "messages": new_msgs, "total": len(ctx.messages)}
+
+
+@app.post("/sessions/{session_id}/close")
+def close_session(session_id: str):
+    """坐席关闭会话 — 服务完成后将会话标记为已完成。"""
+    if session_id not in pipeline._sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    ctx = pipeline._sessions[session_id]
+    ctx.status = SessionStatus.COMPLETED
+    return {"session_id": session_id, "status": "completed"}

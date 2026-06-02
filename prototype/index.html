@@ -214,33 +214,21 @@ button{font-family:var(--f);cursor:pointer}input{font-family:var(--f)}
 <!-- WORKSPACE -->
 <section class="vw vw2" id="vw">
   <aside class="wl">
-    <div class="wl-h"><h5>会话列表</h5><div class="wl-s"><div><b>5</b><span>进行中</span></div><div><b>12</b><span>排队</span></div></div></div>
-    <div class="wl-list">
-      <div class="wi on"><div class="wi-t"><span class="wi-n"><span class="wd wd-r"></span>王**</span><span class="wi-tm">2:34</span></div><div class="wi-d">投诉物流延迟,要求赔偿</div><div class="wi-tags"><span class="wt wt-u">紧急</span><span class="wt wt-h">人工</span></div></div>
-      <div class="wi"><div class="wi-t"><span class="wi-n"><span class="wd wd-y"></span>李**</span><span class="wi-tm">1:12</span></div><div class="wi-d">退货运费问题</div><div class="wi-tags"><span class="wt wt-h">人工</span></div></div>
-      <div class="wi"><div class="wi-t"><span class="wi-n"><span class="wd wd-g"></span>张**</span><span class="wi-tm">0:45</span></div><div class="wi-d">查物流</div><div class="wi-tags"><span class="wt wt-a">AI</span></div></div>
-      <div class="wi"><div class="wi-t"><span class="wi-n"><span class="wd wd-g"></span>赵**</span><span class="wi-tm">0:23</span></div><div class="wi-d">价保</div><div class="wi-tags"><span class="wt wt-a">AI</span></div></div>
+    <div class="wl-h"><h5>待处理会话</h5><div class="wl-s"><div><b id="wl-count">0</b><span>待接入</span></div></div></div>
+    <div class="wl-list" id="wl-list">
+      <div class="wi-empty" style="padding:30px 16px;text-align:center;color:var(--t3);font-size:12px">暂无升级会话<br><small>用户对话中触发转人工后会出现在此</small></div>
     </div>
   </aside>
   <div class="wc">
-    <div class="wc-h"><div class="wc-u"><div class="wc-av">王</div><div><h5>王** · 投诉物流</h5><span>2:34 · R3 · 已升级</span></div></div><div class="wc-acts"><button class="wa">📋工单</button><button class="wa">↗转接</button><button class="wa">⏸挂起</button></div></div>
-    <div class="wc-msgs">
-      <div class="wm fu"><div class="wm-l">用户 · 14:01</div><div class="wm-b">快递3天了还没到！什么破服务！</div></div>
-      <div class="wm fb"><div class="wm-l"><span class="ai">AI</span>14:01</div><div class="wm-b">非常理解您的着急,已催促优先派送。</div></div>
-      <div class="wm fu"><div class="wm-l">用户 · 14:02</div><div class="wm-b">我要投诉到消协！必须赔偿！</div></div>
-      <div class="wm fb"><div class="wm-l"><span class="ai">AI</span>14:02 · ⚡升级</div><div class="wm-b">正在转接专属客服...</div></div>
-      <div class="aic">
-        <div class="aic-h"><span class="aic-t">🤖 AI建议回复</span><span class="aic-c">92%</span></div>
-        <div class="aic-body">王先生您好,非常抱歉物流延迟。为表歉意,补偿方案请选择:<br>1️⃣ 5元无门槛券<br>2️⃣ 退运费¥8<br>3️⃣ 优先配送+3元券</div>
-        <div class="aic-acts"><button class="ab ab-p">✓ 发送</button><button class="ab ab-s">✎ 编辑</button><button class="ab ab-s">✕ 忽略</button></div>
-      </div>
+    <div class="wc-h"><div class="wc-u"><div class="wc-av">?</div><div><h5 id="wc-title">选择左侧会话</h5><span id="wc-sub">等待用户转入...</span></div></div><div class="wc-acts"><button class="wa">📋工单</button><button class="wa">↗转接</button><button class="wa">⏸挂起</button></div></div>
+    <div class="wc-msgs" id="wc-msgs">
+      <div style="padding:40px 16px;text-align:center;color:var(--t3);font-size:13px">请在左侧选择一个会话查看消息</div>
     </div>
-    <div class="wc-ft"><input class="wc-in" placeholder="输入回复..."><button class="wc-sn">发送</button></div>
+    <div class="wc-ft"><input class="wc-in" id="wc-input" placeholder="输入回复..." disabled><button class="wc-sn" id="wc-send" disabled>发送</button></div>
   </div>
   <aside class="wr">
-    <div class="wr-s"><div class="wr-t">用户画像</div><div class="wr-card"><div class="wr-row"><span>等级</span><span class="vip">SVIP</span></div><div class="wr-row"><span>LTV</span><span>¥12,800</span></div><div class="wr-row"><span>投诉</span><span>2次</span></div><div class="wr-row"><span>满意度</span><span>4.1</span></div></div></div>
-    <div class="wr-s"><div class="wr-t">情绪趋势</div><div class="emo-bar"><div class="emo-s" style="width:33%;background:var(--t3);border-radius:3px 0 0 3px"></div><div class="emo-s" style="width:33%;background:var(--warn)"></div><div class="emo-s" style="width:34%;background:var(--err);border-radius:0 3px 3px 0"></div></div><div class="emo-lbl"><span>R1中性</span><span>R2不满</span><span>R3愤怒</span></div><div class="emo-now"><span class="emo-b">🤬 愤怒</span><span class="emo-tr">↑升温</span></div></div>
-    <div class="wr-s"><div class="wr-t">⚠️ 风险</div><div class="wr-warn">用户提及"消协"<br>SVIP高LTV,建议优先</div></div>
+    <div class="wr-s"><div class="wr-t">会话信息</div><div class="wr-card"><div class="wr-row"><span>等级</span><span id="wr-tier">—</span></div><div class="wr-row"><span>意图</span><span id="wr-intent">—</span></div><div class="wr-row"><span>情绪</span><span id="wr-emotion">—</span></div><div class="wr-row"><span>轮次</span><span id="wr-turns">—</span></div></div></div>
+    <div class="wr-s"><div class="wr-t">状态</div><div class="wr-warn" id="wr-status">等待选择会话</div></div>
   </aside>
 </section>
 
@@ -269,7 +257,7 @@ button{font-family:var(--f);cursor:pointer}input{font-family:var(--f)}
 <div class="sbar"><span><span class="sd"></span>Ready</span><span id="ss">Session: -</span><span id="sm">Model: -</span><span id="sl">Latency: -</span><span id="sc">Cache: -</span></div>
 
 <script>
-const API='http://localhost:8000';
+const API=location.hostname==='localhost'||location.hostname==='127.0.0.1'?'http://localhost:8000':`http://${location.hostname}:8000`;
 let sid=null;
 
 // Tabs
@@ -292,7 +280,12 @@ async function send(txt){
     document.getElementById('sm').textContent='Model: '+d.model_used;
     document.getElementById('sl').textContent=d.latency_ms+'ms';
     document.getElementById('sc').textContent=d.from_cache?'Cache:HIT✓':'Cache:MISS';
-    if(d.suggest_transfer_human)addMsg('b','💡 <em>建议转接人工客服</em>');
+    if(d.suggest_transfer_human){
+      addMsg('b','💡 <em>已转接人工客服，坐席接入中...</em>');
+      isEscalated=true;
+      userMsgIndex=0;
+      if(!pollUserInterval)pollUserInterval=setInterval(pollAgentMessages,3000);
+    }
   }catch(e){hideTyp();addMsg('b',`⚠️ 连接失败: ${e.message}<br><small>启动后端: python scripts/run_server.py</small>`)}
 }
 inp.onkeydown=e=>{if(e.key==='Enter')send(inp.value)};
@@ -301,6 +294,148 @@ document.querySelectorAll('.qb').forEach(b=>{b.onclick=()=>send(b.dataset.q)});
 
 // Chart
 (function(){const c=document.getElementById('cht');const d=[12,8,5,3,4,7,19,38,55,70,74,80,84,76,72,69,84,97,90,78,64,50,37,24];const mx=Math.max(...d);d.forEach(v=>{const b=document.createElement('div');b.className='br';b.style.height=(v/mx*100)+'%';c.appendChild(b)})})();
+
+// ═══ 坐席工作台交互(动态 — 从API获取真实数据) ═══
+(function(){
+  let activeSessionId=null;
+  const EMOTIONS={'neutral':'😐 中性','negative':'😤 不满','angry':'🤬 愤怒','anxious':'😰 焦虑'};
+
+  // 轮询升级会话列表
+  async function pollEscalated(){
+    try{
+      const r=await fetch(API+'/sessions/escalated');
+      if(!r.ok)return;
+      const d=await r.json();
+      renderSessionList(d.sessions);
+      document.getElementById('wl-count').textContent=d.total;
+    }catch(e){}
+  }
+
+  function renderSessionList(sessions){
+    const list=document.getElementById('wl-list');
+    if(!sessions.length){
+      list.innerHTML='<div class="wi-empty" style="padding:30px 16px;text-align:center;color:var(--t3);font-size:12px">暂无升级会话<br><small>用户对话中触发转人工后会出现在此</small></div>';
+      return;
+    }
+    list.innerHTML=sessions.map(s=>{
+      const isActive=s.session_id===activeSessionId?'on':'';
+      const emotionDot=s.emotion==='angry'?'wd-r':s.emotion==='negative'?'wd-y':'wd-g';
+      return `<div class="wi ${isActive}" data-sid="${s.session_id}">
+        <div class="wi-t"><span class="wi-n"><span class="wd ${emotionDot}"></span>${s.session_id.slice(0,8)}</span><span class="wi-tm">${s.last_time||''}</span></div>
+        <div class="wi-d">${s.last_message||'(无消息)'}</div>
+        <div class="wi-tags"><span class="wt wt-u">${s.intent||'未知'}</span><span class="wt wt-h">${s.emotion}</span><span class="wt" style="background:rgba(108,99,255,.1);color:var(--ac)">${s.user_tier}</span></div>
+      </div>`;
+    }).join('');
+    // 绑定点击
+    list.querySelectorAll('.wi').forEach(el=>{
+      el.style.cursor='pointer';
+      el.onclick=()=>{
+        list.querySelectorAll('.wi').forEach(x=>x.classList.remove('on'));
+        el.classList.add('on');
+        loadSession(el.dataset.sid);
+      };
+    });
+  }
+
+  // 加载某个会话的完整消息
+  async function loadSession(sessionId){
+    activeSessionId=sessionId;
+    document.getElementById('wc-input').disabled=false;
+    document.getElementById('wc-send').disabled=false;
+    try{
+      const r=await fetch(API+'/sessions/'+sessionId+'/messages');
+      if(!r.ok)return;
+      const d=await r.json();
+      // 更新头部
+      document.getElementById('wc-title').textContent=sessionId.slice(0,8)+' · '+(d.intent||'未知意图');
+      document.getElementById('wc-sub').textContent=d.status+' · '+d.emotion;
+      document.querySelector('.wc-av').textContent=d.intent?d.intent[0]:'?';
+      // 更新右侧画像
+      document.getElementById('wr-tier').textContent=d.user_tier||'normal';
+      document.getElementById('wr-intent').textContent=d.intent||'—';
+      document.getElementById('wr-emotion').textContent=EMOTIONS[d.emotion]||d.emotion;
+      document.getElementById('wr-turns').textContent=Math.floor(d.messages.length/2)+'轮';
+      document.getElementById('wr-status').innerHTML='🔴 已升级,待接入<br>会话ID: '+sessionId.slice(0,12)+'...';
+      // 渲染消息
+      renderMessages(d.messages);
+    }catch(e){console.error(e)}
+  }
+
+  function renderMessages(messages){
+    const el=document.getElementById('wc-msgs');
+    el.innerHTML=messages.map(m=>{
+      if(m.role==='user')return `<div class="wm fu"><div class="wm-l">用户 · ${m.time}</div><div class="wm-b">${m.content}</div></div>`;
+      if(m.role==='agent')return `<div class="wm fb"><div class="wm-l"><span class="ai" style="background:#0DD68B;color:#fff">坐席</span>${m.time}</div><div class="wm-b">${m.content}</div></div>`;
+      return `<div class="wm fb"><div class="wm-l"><span class="ai">AI</span>${m.time}</div><div class="wm-b">${m.content}</div></div>`;
+    }).join('');
+    el.scrollTop=el.scrollHeight;
+  }
+
+  // 坐席发送回复
+  async function agentSend(){
+    const inp=document.getElementById('wc-input');
+    const txt=inp.value.trim();
+    if(!txt||!activeSessionId)return;
+    inp.value='';
+    try{
+      const r=await fetch(API+'/sessions/'+activeSessionId+'/agent-reply',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:txt})
+      });
+      if(r.ok){
+        loadSession(activeSessionId);// 刷新消息
+        showToast('✅ 已发送给用户');
+      }
+    }catch(e){showToast('❌ 发送失败')}
+  }
+  document.getElementById('wc-send').onclick=agentSend;
+  document.getElementById('wc-input').onkeydown=e=>{if(e.key==='Enter')agentSend();};
+
+  // 工具按钮
+  document.querySelectorAll('.wa').forEach(btn=>{
+    btn.onclick=()=>{
+      const t=btn.textContent.trim();
+      if(t.includes('工单'))showToast('📋 已创建工单 #'+Math.floor(Math.random()*9000+1000));
+      else if(t.includes('转接'))showToast('↗ 已转接至高级坐席组');
+      else if(t.includes('挂起'))showToast('⏸ 会话已挂起');
+    };
+  });
+
+  // Toast
+  function showToast(msg){
+    let t=document.getElementById('ws-toast');
+    if(!t){t=document.createElement('div');t.id='ws-toast';t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:10px 22px;background:rgba(11,17,32,.92);color:#fff;border-radius:8px;font-size:13px;z-index:9999;backdrop-filter:blur(10px);border:1px solid rgba(108,99,255,.3);transition:opacity .3s';document.body.appendChild(t);}
+    t.textContent=msg;t.style.opacity='1';
+    clearTimeout(t._timer);t._timer=setTimeout(()=>{t.style.opacity='0'},2500);
+  }
+
+  // 每3秒轮询 + 如果有活跃会话也刷新消息
+  setInterval(()=>{
+    pollEscalated();
+    if(activeSessionId)loadSession(activeSessionId);
+  },3000);
+  pollEscalated();
+})();
+
+// ═══ 用户对话侧：转人工后轮询坐席消息 ═══
+let userMsgIndex=0;
+let isEscalated=false;
+let pollUserInterval=null;
+
+async function pollAgentMessages(){
+  if(!sid||!isEscalated)return;
+  try{
+    const r=await fetch(API+'/sessions/'+sid+'/new-messages?after='+userMsgIndex);
+    if(!r.ok)return;
+    const d=await r.json();
+    d.messages.forEach(m=>{
+      if(m.index>=userMsgIndex && m.role==='agent'){
+        addMsg('b','👨‍💼 <b>人工客服:</b> '+m.content,{model:'human'});
+      }
+    });
+    userMsgIndex=d.total;
+  }catch(e){}
+}
 
 // Status poll
 async function poll(){try{const r=await fetch(API+'/status');if(r.ok){const d=await r.json();document.getElementById('lvl').textContent=d.level;document.getElementById('dlvl').textContent=d.level;document.getElementById('kSess').textContent=d.active_sessions;document.getElementById('apiSt').textContent='API: ● online';document.getElementById('apiSt').style.color='var(--ok)'}}catch(e){document.getElementById('apiSt').textContent='API: ○ offline';document.getElementById('apiSt').style.color='var(--err)'}}
